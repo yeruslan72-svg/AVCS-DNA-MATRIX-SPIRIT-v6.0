@@ -1,44 +1,35 @@
 import streamlit as st
 from PIL import Image
+import os
 
-# ================== CONFIG ==================
-st.set_page_config(
-    page_title="AVCS DNA-MATRIX SPIRIT",
-    page_icon="🧠",
-    layout="wide"
-)
+def main():
+    # === APP CONFIG ===
+    st.set_page_config(
+        page_title="AVCS DNA-MATRIX SPIRIT v6.0",
+        page_icon="⚙️",
+        layout="wide"
+    )
 
-# ================== HEADER ==================
-col1, col2 = st.columns([1, 6])
-with col1:
-    logo = Image.open("assets/logo.png")
-    st.image(logo, width=80)
-with col2:
-    st.markdown("## **AVCS DNA-MATRIX SPIRIT**")
-    st.markdown("*Operational Excellence Delivered...*")
+    # === LOAD LOGO ===
+    logo_path = os.path.join("assets", "logo.png")
+    if os.path.exists(logo_path):
+        logo = Image.open(logo_path)
+        st.image(logo, use_container_width=True)
+    else:
+        st.warning("⚠️ Logo not found. Please check /assets/logo.png")
 
-st.divider()
+    # === HEADER ===
+    st.markdown(
+        """
+        <h1 style='text-align: center; color: #0A84FF;'>AVCS DNA-MATRIX SPIRIT v6.0</h1>
+        <h3 style='text-align: center; color: gray;'>Operational Excellence Delivered...</h3>
+        <hr style='margin-top: 10px; margin-bottom: 30px;'>
+        """,
+        unsafe_allow_html=True
+    )
 
-# ================== SIDEBAR ==================
-st.sidebar.header("Navigation")
-menu = st.sidebar.radio(
-    "Select Section:",
-    ["Overview", "Digital Twin", "PLC Integration", "AI Core", "Logs"]
-)
+    # === DASHBOARD BODY PLACEHOLDER ===
+    st.write("🚀 Dashboard is initializing...")
 
-# ================== CONTENT ==================
-if menu == "Overview":
-    st.subheader("System Overview")
-    st.info("Welcome to AVCS DNA-MATRIX SPIRIT v6.0 dashboard.")
-elif menu == "Digital Twin":
-    st.subheader("Digital Twin Module")
-    st.write("Monitoring virtual plant models and live data streams...")
-elif menu == "PLC Integration":
-    st.subheader("PLC Integration Layer")
-    st.write("Adapters and live PLC communication states...")
-elif menu == "AI Core":
-    st.subheader("AI Data Matrix Core")
-    st.write("Processing, analytics, and model orchestration.")
-elif menu == "Logs":
-    st.subheader("System Logs")
-    st.write("Event and status logs will appear here.")
+if __name__ == "__main__":
+    main()
