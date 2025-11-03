@@ -1,0 +1,11 @@
+[theme]
+primaryColor = "#00B4D8"        # лазурно-циановый
+backgroundColor = "#0A0A0A"     # глубокий тёмный фон
+secondaryBackgroundColor = "#141414"
+textColor = "#E0E0E0"
+font = "sans serif"
+
+[server]
+enableCORS = false
+headless = true
+port = 8501
