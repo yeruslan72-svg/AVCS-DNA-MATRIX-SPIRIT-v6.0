@@ -1,45 +1,26 @@
 import streamlit as st
-from PIL import Image
-import os
-
-def main():
-    # === APP CONFIG ===
-    st.set_page_config(
-        page_title="AVCS DNA-MATRIX SPIRIT v6.0",
-        page_icon="⚙️",
-        layout="wide"
-    )
-
-    # === LOAD LOGO ===
-    logo_path = os.path.join("assets", "logo.png")
-    if os.path.exists(logo_path):
-        logo = Image.open(logo_path)
-        st.image(logo, use_container_width=True)
-    else:
-        st.warning("⚠️ Logo not found. Please check /assets/logo.png")
-
-    # === HEADER ===
-    st.markdown(
-        """
-        <h1 style='text-align: center; color: #0A84FF;'>AVCS DNA-MATRIX SPIRIT v6.0</h1>
-        <h3 style='text-align: center; color: gray;'>Operational Excellence Delivered...</h3>
-        <hr style='margin-top: 10px; margin-bottom: 30px;'>
-        """,
-        unsafe_allow_html=True
-    )
-
-    # === DASHBOARD BODY PLACEHOLDER ===
-    st.write("🚀 Dashboard is initializing...")
-  import random
+import random
 import time
+from PIL import Image
+
+# ==============================
+# AVCS DNA-MATRIX SPIRIT DASHBOARD v6.0
+# ==============================
+
+def load_logo():
+    try:
+        logo = Image.open("assets/logo.png")
+        st.image(logo, width=200)
+    except Exception:
+        st.warning("⚠️ Logo not found in assets/logo.png")
 
 def render_system_overview():
     st.subheader("🧠 System Overview & Status Monitor")
 
-    # --- COLUMNS LAYOUT ---
+    # --- Layout columns ---
     col1, col2, col3, col4, col5 = st.columns(5)
 
-    # --- STATUS SIMULATION ---
+    # --- Simulated system data ---
     system_status = random.choice(["ONLINE", "WARNING", "OFFLINE"])
     sensor_temp = round(random.uniform(35.0, 85.0), 1)
     sensor_pressure = round(random.uniform(1.0, 10.0), 2)
@@ -47,14 +28,14 @@ def render_system_overview():
     stream_latency = round(random.uniform(50, 300), 1)
     plc_connected = random.choice([True, False])
 
-    # --- COLOR MAP ---
+    # --- Color indicators ---
     status_color = {
         "ONLINE": "✅",
         "WARNING": "⚠️",
         "OFFLINE": "🔴"
     }
 
-    # --- DISPLAY STATUS ---
+    # --- Display metrics ---
     col1.metric("System Status", system_status, status_color[system_status])
     col2.metric("Temp °C", sensor_temp)
     col3.metric("Pressure bar", sensor_pressure)
@@ -65,16 +46,47 @@ def render_system_overview():
     plc_status = "🟢 Connected" if plc_connected else "🔴 Disconnected"
     st.info(f"PLC Connection: **{plc_status}**")
 
+    # --- Sync progress bar ---
     st.progress(random.randint(40, 100) / 100)
     st.caption("Live status refresh every 5 seconds...")
 
-# Inject auto-refresh
-if st.button("🔄 Refresh System Overview"):
-    st.rerun()
+# ==============================
+# MAIN APP DASHBOARD
+# ==============================
 
-# Auto refresh every 5 seconds
-time.sleep(5)
-render_system_overview()
+def main():
+    st.set_page_config(
+        page_title="AVCS DNA-MATRIX SPIRIT v6.0",
+        page_icon="🧬",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
+
+    load_logo()
+    st.title("🚀 AVCS DNA-MATRIX SPIRIT v6.0 Dashboard")
+    st.write("Smart Industrial Digital Twin & Control Interface")
+
+    # Sidebar navigation
+    page = st.sidebar.selectbox(
+        "Select view:",
+        ["Overview", "Sensors", "Digital Twin", "PLC Integration", "System Settings"]
+    )
+
+    # Page routing
+    if page == "Overview":
+        render_system_overview()
+    elif page == "Sensors":
+        st.info("📡 Sensor data visualization coming soon...")
+    elif page == "Digital Twin":
+        st.info("🧩 Digital Twin module loading...")
+    elif page == "PLC Integration":
+        st.info("🔌 PLC Integration interface coming soon...")
+    elif page == "System Settings":
+        st.info("⚙️ System configuration settings coming soon...")
+
+    # Auto refresh mechanism
+    time.sleep(5)
+    st.rerun()
 
 if __name__ == "__main__":
     main()
