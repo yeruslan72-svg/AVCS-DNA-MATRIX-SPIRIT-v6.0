@@ -1,25 +1,34 @@
 """
 dashboard.py
-AVCS DNA-MATRIX SPIRIT v6.1 — SPIRIT FRAME
+AVCS DNA-MATRIX SPIRIT v6.1a — SPIRIT FRAME
 Streamlit dashboard with integrated Digital Twin Control and Analytics Engine.
+Now includes automatic CSV logging for analytics history.
 """
 
 import streamlit as st
 import pandas as pd
 import numpy as np
+import os
 import time
 import random
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from industrial_core.data_manager import DataBuffer
 from industrial_core.analytics_engine import AnalyticsEngine
 from ui.twin_control_panel import render_twin_control
 
+# =====================================================
+# PAGE CONFIG
+# =====================================================
+
 st.set_page_config(
-    page_title="AVCS DNA-MATRIX SPIRIT v6.1",
+    page_title="AVCS DNA-MATRIX SPIRIT v6.1a",
     layout="wide",
     page_icon="🧠",
 )
+
+DATA_PATH = "data/analytics_log.csv"
+os.makedirs("data", exist_ok=True)
 
 # =====================================================
 # INITIALIZATION
@@ -40,32 +49,18 @@ if "last_analytics" not in st.session_state:
 # =====================================================
 # SIDEBAR
 # =====================================================
+
 st.sidebar.image("assets/logo.png", use_container_width=True)
 st.sidebar.markdown("### AVCS DNA-MATRIX SPIRIT FRAME")
 st.sidebar.markdown("**Operational Excellence Delivered** 🚀")
 
 menu = st.sidebar.radio(
     "Select module:",
-    ["Dashboard", "Digital Twin", "Analytics", "Settings"],
+    ["Dashboard", "Digital Twin", "Analytics", "History", "Settings"],
 )
 
-st.sidebar.markdown("---")
-if st.sidebar.button("Run analytics on latest sample"):
-    buf = st.session_state["sensors_buf"]
-    if buf and len(buf.timestamps) > 0:
-        latest = {
-            "vibration": buf.vibration[-1],
-            "temperature": buf.temperature[-1],
-            "pressure": buf.pressure[-1],
-        }
-        result = st.session_state["analytics"].predict(latest)
-        st.session_state["last_analytics"] = result
-        st.sidebar.success("✅ Analytics executed")
-    else:
-        st.sidebar.warning("No sensor data available.")
-
 # =====================================================
-# MAIN DASHBOARD
+# DASHBOARD
 # =====================================================
 
 if menu == "Dashboard":
@@ -85,16 +80,13 @@ if menu == "Dashboard":
     st.markdown("---")
     chart_placeholder = st.empty()
 
-    c1, c2 = st.columns(2)
-    with c1:
-        start_btn = st.button("▶️ Start Sensors Stream", type="primary")
-    with c2:
-        stop_btn = st.button("⏹ Stop Stream")
-
-    if start_btn:
-        st.session_state["streaming"] = True
-    if stop_btn:
-        st.session_state["streaming"] = False
+    start_btn, stop_btn = st.columns(2)
+    with start_btn:
+        if st.button("▶️ Start Sensors Stream", type="primary"):
+            st.session_state["streaming"] = True
+    with stop_btn:
+        if st.button("⏹ Stop Stream"):
+            st.session_state["streaming"] = False
 
     if st.session_state["streaming"]:
         st.info("Streaming sensor data... press Stop to pause.")
@@ -103,40 +95,34 @@ if menu == "Dashboard":
         for _ in range(100):
             if not st.session_state["streaming"]:
                 break
-
             ts = datetime.utcnow()
             temp = 60 + random.random() * 20
             pres = 4 + random.random() * 2
             vib = 0.2 + random.random() * 2
-
             st.session_state["sensors_buf"].append(ts, temp, pres, vib)
             chart_data = chart_data._append(
-                {"timestamp": ts, "temperature": temp, "pressure": pres, "vibration": vib}, ignore_index=True
+                {"timestamp": ts, "temperature": temp, "pressure": pres, "vibration": vib},
+                ignore_index=True
             )
-
             chart_placeholder.line_chart(
                 chart_data.set_index("timestamp")[["temperature", "pressure", "vibration"]]
             )
             time.sleep(0.3)
-
         st.success("Stream stopped.")
     else:
-        # show last buffered
         if len(buf.timestamps) > 0:
-            df = pd.DataFrame(
-                {
-                    "timestamp": buf.timestamps,
-                    "temperature": buf.temperature,
-                    "pressure": buf.pressure,
-                    "vibration": buf.vibration,
-                }
-            )
+            df = pd.DataFrame({
+                "timestamp": buf.timestamps,
+                "temperature": buf.temperature,
+                "pressure": buf.pressure,
+                "vibration": buf.vibration
+            })
             st.line_chart(df.set_index("timestamp"))
         else:
             st.info("No sensor data yet — start the stream to begin monitoring.")
 
 # =====================================================
-# DIGITAL TWIN CONTROL PANEL
+# DIGITAL TWIN
 # =====================================================
 
 elif menu == "Digital Twin":
@@ -150,7 +136,6 @@ elif menu == "Digital Twin":
 
 elif menu == "Analytics":
     st.title("🧠 Predictive Analytics & Health Assessment")
-
     buf = st.session_state["sensors_buf"]
     engine = st.session_state["analytics"]
 
@@ -160,10 +145,30 @@ elif menu == "Analytics":
             "temperature": buf.temperature[-1],
             "pressure": buf.pressure[-1],
         }
-
         result = engine.predict(latest)
         st.session_state["last_analytics"] = result
 
+        # ✅ Log result to CSV
+        record = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "health_score": result["health_score"],
+            "risk_index": result["risk_index"],
+            "rul_hours": result["rul_hours"],
+            "anomaly": result["anomaly"],
+            "recommended_action": result["recommended_action"],
+        }
+
+        df_new = pd.DataFrame([record])
+        if os.path.exists(DATA_PATH):
+            df_old = pd.read_csv(DATA_PATH)
+            df_combined = pd.concat([df_old, df_new], ignore_index=True)
+        else:
+            df_combined = df_new
+        df_combined.to_csv(DATA_PATH, index=False)
+
+        st.success("✅ Analytics saved to data/analytics_log.csv")
+
+        # Display
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Health Score", f"{result['health_score']}%")
         col2.metric("Risk Index", f"{result['risk_index']}%")
@@ -175,17 +180,32 @@ elif menu == "Analytics":
     else:
         st.info("No data — start streaming or run Twin simulation first.")
 
-    if st.session_state["last_analytics"]:
-        st.markdown("#### Last Recommendation:")
-        st.success(st.session_state["last_analytics"]["recommended_action"])
+# =====================================================
+# HISTORY VIEW
+# =====================================================
+
+elif menu == "History":
+    st.title("📚 Analytics History Log")
+
+    if os.path.exists(DATA_PATH):
+        df = pd.read_csv(DATA_PATH)
+        st.dataframe(df.tail(50))
+        st.download_button(
+            "📥 Download Full CSV",
+            data=open(DATA_PATH, "rb"),
+            file_name="analytics_log.csv",
+            mime="text/csv",
+        )
+    else:
+        st.info("No analytics history found yet.")
 
 # =====================================================
-# SETTINGS / INFO
+# SETTINGS
 # =====================================================
 
 elif menu == "Settings":
     st.title("⚙️ System Settings & Info")
-    st.markdown("### AVCS DNA-MATRIX SPIRIT FRAME v6.1")
+    st.markdown("### AVCS DNA-MATRIX SPIRIT FRAME v6.1a")
     st.markdown(
         """
         **Core Modules:**
@@ -194,11 +214,9 @@ elif menu == "Settings":
         - `plc_integration` — OPC/Modbus Connectivity  
         - `ui` — Streamlit Frontend Components  
         - `assets/logo.png` — Branding and identity  
+        - `data/analytics_log.csv` — Analytics result history  
 
         **Operational Excellence Delivered.**
         """
     )
-
-    st.markdown("---")
     st.caption(f"Build timestamp: {datetime.utcnow().isoformat()}Z")
-
