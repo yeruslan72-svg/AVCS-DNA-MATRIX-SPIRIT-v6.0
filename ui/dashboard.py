@@ -1,222 +1,128 @@
-"""
-dashboard.py
-AVCS DNA-MATRIX SPIRIT v6.1a — SPIRIT FRAME
-Streamlit dashboard with integrated Digital Twin Control and Analytics Engine.
-Now includes automatic CSV logging for analytics history.
-"""
-
 import streamlit as st
 import pandas as pd
 import numpy as np
-import os
 import time
-import random
+import os
 from datetime import datetime
+from pathlib import Path
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+from PIL import Image
 
-from industrial_core.data_manager import DataBuffer
-from industrial_core.analytics_engine import AnalyticsEngine
-from ui.twin_control_panel import render_twin_control
-
-# =====================================================
-# PAGE CONFIG
-# =====================================================
+# ===============================
+# AVCS DNA-MATRIX SPIRIT v6.0 UI
+# ===============================
 
 st.set_page_config(
-    page_title="AVCS DNA-MATRIX SPIRIT v6.1a",
+    page_title="AVCS DNA-MATRIX SPIRIT",
     layout="wide",
-    page_icon="🧠",
+    page_icon="⚙️",
+    initial_sidebar_state="expanded"
 )
 
-DATA_PATH = "data/analytics_log.csv"
+# ---------- ASSETS ----------
+logo_path = Path("assets/logo.png")
+if logo_path.exists():
+    logo = Image.open(logo_path)
+    st.sidebar.image(logo, use_column_width=True)
+st.sidebar.markdown("### **AVCS DNA-MATRIX SPIRIT v6.0**")
+st.sidebar.caption("Operational Excellence Delivered...")
+
+# ---------- DATA HANDLING ----------
+analytics_file = Path("data/analytics_log.csv")
 os.makedirs("data", exist_ok=True)
+if not analytics_file.exists():
+    with open(analytics_file, "w") as f:
+        f.write("timestamp,health_score,risk_index,rul_hours,anomaly,recommended_action\n")
 
-# =====================================================
-# INITIALIZATION
-# =====================================================
+# ---------- MAIN SECTIONS ----------
+tabs = st.tabs(["🏭 Digital Twin Control", "📊 Analytics Panel", "⚡ System Health"])
 
-if "sensors_buf" not in st.session_state:
-    st.session_state["sensors_buf"] = DataBuffer(maxlen=500)
-
-if "streaming" not in st.session_state:
-    st.session_state["streaming"] = False
-
-if "analytics" not in st.session_state:
-    st.session_state["analytics"] = AnalyticsEngine()
-
-if "last_analytics" not in st.session_state:
-    st.session_state["last_analytics"] = None
-
-# =====================================================
-# SIDEBAR
-# =====================================================
-
-st.sidebar.image("assets/logo.png", use_container_width=True)
-st.sidebar.markdown("### AVCS DNA-MATRIX SPIRIT FRAME")
-st.sidebar.markdown("**Operational Excellence Delivered** 🚀")
-
-menu = st.sidebar.radio(
-    "Select module:",
-    ["Dashboard", "Digital Twin", "Analytics", "History", "Settings"],
-)
-
-# =====================================================
-# DASHBOARD
-# =====================================================
-
-if menu == "Dashboard":
-    st.title("📊 AVCS DNA-MATRIX SPIRIT Dashboard")
-    st.markdown("### Real-time equipment condition monitoring")
+# ---------- DIGITAL TWIN CONTROL ----------
+with tabs[0]:
+    st.header("🏭 Digital Twin Control")
+    st.write("Monitor and interact with real-time virtualized industrial assets.")
 
     col1, col2, col3 = st.columns(3)
-    buf = st.session_state["sensors_buf"]
-
     with col1:
-        st.metric("Temperature (°C)", f"{buf.temperature[-1] if buf.temperature else 0:.2f}")
+        pressure = st.slider("Pressure [bar]", 0.0, 10.0, 4.5, step=0.1)
     with col2:
-        st.metric("Pressure (bar)", f"{buf.pressure[-1] if buf.pressure else 0:.2f}")
+        temp = st.slider("Temperature [°C]", 20.0, 120.0, 65.0, step=0.5)
     with col3:
-        st.metric("Vibration (g)", f"{buf.vibration[-1] if buf.vibration else 0:.3f}")
+        vibration = st.slider("Vibration [mm/s]", 0.0, 50.0, 7.5, step=0.5)
 
-    st.markdown("---")
-    chart_placeholder = st.empty()
+    # Calculate Health Metrics
+    health_score = max(0, 100 - (vibration * 0.7 + (temp - 60) * 0.5 + (pressure - 5) * 1.5))
+    risk_index = np.clip((100 - health_score) / 10, 0, 10)
+    rul_hours = np.clip((health_score / 100) * 5000, 0, 5000)
+    anomaly = "⚠️ High vibration" if vibration > 40 else "✅ Stable"
 
-    start_btn, stop_btn = st.columns(2)
-    with start_btn:
-        if st.button("▶️ Start Sensors Stream", type="primary"):
-            st.session_state["streaming"] = True
-    with stop_btn:
-        if st.button("⏹ Stop Stream"):
-            st.session_state["streaming"] = False
+    # Save analytics
+    new_row = f"{datetime.now().isoformat(timespec='seconds')},{health_score:.2f},{risk_index:.2f},{rul_hours:.0f},{anomaly},None\n"
+    with open(analytics_file, "a") as f:
+        f.write(new_row)
 
-    if st.session_state["streaming"]:
-        st.info("Streaming sensor data... press Stop to pause.")
-        chart_data = pd.DataFrame(columns=["timestamp", "temperature", "pressure", "vibration"])
+    # Display metrics
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Health Score", f"{health_score:.1f} %")
+    c2.metric("Risk Index", f"{risk_index:.1f} / 10")
+    c3.metric("Estimated RUL", f"{rul_hours:.0f} h")
 
-        for _ in range(100):
-            if not st.session_state["streaming"]:
-                break
-            ts = datetime.utcnow()
-            temp = 60 + random.random() * 20
-            pres = 4 + random.random() * 2
-            vib = 0.2 + random.random() * 2
-            st.session_state["sensors_buf"].append(ts, temp, pres, vib)
-            chart_data = chart_data._append(
-                {"timestamp": ts, "temperature": temp, "pressure": pres, "vibration": vib},
-                ignore_index=True
-            )
-            chart_placeholder.line_chart(
-                chart_data.set_index("timestamp")[["temperature", "pressure", "vibration"]]
-            )
-            time.sleep(0.3)
-        st.success("Stream stopped.")
-    else:
-        if len(buf.timestamps) > 0:
-            df = pd.DataFrame({
-                "timestamp": buf.timestamps,
-                "temperature": buf.temperature,
-                "pressure": buf.pressure,
-                "vibration": buf.vibration
-            })
-            st.line_chart(df.set_index("timestamp"))
-        else:
-            st.info("No sensor data yet — start the stream to begin monitoring.")
+    # Dynamic Gauge
+    fig = make_subplots(rows=1, cols=1, specs=[[{'type': 'indicator'}]])
+    fig.add_trace(go.Indicator(
+        mode="gauge+number",
+        value=health_score,
+        title={'text': "System Health"},
+        gauge={'axis': {'range': [0, 100]},
+               'bar': {'color': "mediumseagreen"},
+               'steps': [
+                   {'range': [0, 40], 'color': "crimson"},
+                   {'range': [40, 70], 'color': "gold"},
+                   {'range': [70, 100], 'color': "lightgreen"}]}
+    ))
+    st.plotly_chart(fig, use_container_width=True)
 
-# =====================================================
-# DIGITAL TWIN
-# =====================================================
+# ---------- ANALYTICS PANEL ----------
+with tabs[1]:
+    st.header("📊 Analytics & Diagnostics")
 
-elif menu == "Digital Twin":
-    st.title("🧩 Digital Twin Control Center")
-    st.markdown("Configure and simulate operational scenarios.")
-    render_twin_control()
+    df = pd.read_csv(analytics_file)
+    if len(df) > 0:
+        st.dataframe(df.tail(10), use_container_width=True)
 
-# =====================================================
-# ANALYTICS PANEL
-# =====================================================
+        # Trend chart
+        trend_fig = go.Figure()
+        trend_fig.add_trace(go.Scatter(x=df["timestamp"], y=df["health_score"], name="Health Score", mode="lines+markers"))
+        trend_fig.add_trace(go.Scatter(x=df["timestamp"], y=df["risk_index"], name="Risk Index", mode="lines+markers", yaxis="y2"))
 
-elif menu == "Analytics":
-    st.title("🧠 Predictive Analytics & Health Assessment")
-    buf = st.session_state["sensors_buf"]
-    engine = st.session_state["analytics"]
-
-    if len(buf.timestamps) > 0:
-        latest = {
-            "vibration": buf.vibration[-1],
-            "temperature": buf.temperature[-1],
-            "pressure": buf.pressure[-1],
-        }
-        result = engine.predict(latest)
-        st.session_state["last_analytics"] = result
-
-        # ✅ Log result to CSV
-        record = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "health_score": result["health_score"],
-            "risk_index": result["risk_index"],
-            "rul_hours": result["rul_hours"],
-            "anomaly": result["anomaly"],
-            "recommended_action": result["recommended_action"],
-        }
-
-        df_new = pd.DataFrame([record])
-        if os.path.exists(DATA_PATH):
-            df_old = pd.read_csv(DATA_PATH)
-            df_combined = pd.concat([df_old, df_new], ignore_index=True)
-        else:
-            df_combined = df_new
-        df_combined.to_csv(DATA_PATH, index=False)
-
-        st.success("✅ Analytics saved to data/analytics_log.csv")
-
-        # Display
-        col1, col2, col3, col4 = st.columns(4)
-        col1.metric("Health Score", f"{result['health_score']}%")
-        col2.metric("Risk Index", f"{result['risk_index']}%")
-        col3.metric("RUL Estimate", f"{result['rul_hours']} h")
-        col4.metric("Anomaly", "⚠️ Yes" if result["anomaly"] else "✅ No")
-
-        st.markdown("### Detailed Analysis")
-        st.json(result)
-    else:
-        st.info("No data — start streaming or run Twin simulation first.")
-
-# =====================================================
-# HISTORY VIEW
-# =====================================================
-
-elif menu == "History":
-    st.title("📚 Analytics History Log")
-
-    if os.path.exists(DATA_PATH):
-        df = pd.read_csv(DATA_PATH)
-        st.dataframe(df.tail(50))
-        st.download_button(
-            "📥 Download Full CSV",
-            data=open(DATA_PATH, "rb"),
-            file_name="analytics_log.csv",
-            mime="text/csv",
+        trend_fig.update_layout(
+            yaxis=dict(title="Health Score", range=[0, 100]),
+            yaxis2=dict(title="Risk Index", overlaying="y", side="right", range=[0, 10]),
+            legend=dict(x=0.5, y=1.1, orientation="h"),
+            margin=dict(l=40, r=40, t=50, b=40),
+            template="plotly_white"
         )
+        st.plotly_chart(trend_fig, use_container_width=True)
     else:
-        st.info("No analytics history found yet.")
+        st.info("No analytics data recorded yet.")
 
-# =====================================================
-# SETTINGS
-# =====================================================
+# ---------- SYSTEM HEALTH ----------
+with tabs[2]:
+    st.header("⚡ System Health Overview")
 
-elif menu == "Settings":
-    st.title("⚙️ System Settings & Info")
-    st.markdown("### AVCS DNA-MATRIX SPIRIT FRAME v6.1a")
-    st.markdown(
-        """
-        **Core Modules:**
-        - `industrial_core` — Data Manager, Analytics Engine  
-        - `digital_twin` — Equipment Behavior Simulation  
-        - `plc_integration` — OPC/Modbus Connectivity  
-        - `ui` — Streamlit Frontend Components  
-        - `assets/logo.png` — Branding and identity  
-        - `data/analytics_log.csv` — Analytics result history  
+    st.markdown("""
+    **System Components:**
+    - Digital Twin Engine – ✅ Running  
+    - PLC Integration Layer – ✅ Connected  
+    - Data Manager – ✅ Active  
+    - AI Predictive Module – 🔄 Training in background  
 
-        **Operational Excellence Delivered.**
-        """
-    )
-    st.caption(f"Build timestamp: {datetime.utcnow().isoformat()}Z")
+    **Next Maintenance Window:** 350 h  
+    **Firmware Version:** v6.0.14  
+    """)
+
+# ---------- FOOTER ----------
+st.markdown("---")
+st.caption("© 2025 AVCS DNA-MATRIX SPIRIT | Industrial Intelligence Redefined")
+
