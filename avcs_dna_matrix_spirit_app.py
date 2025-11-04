@@ -1,49 +1,98 @@
-"""
-AVCS DNA-MATRIX SPIRIT v6.0
-Operational Intelligence Interface
-----------------------------------
-Central Streamlit / CLI application that connects industrial core,
-digital twin simulation, and PLC integration layers.
-"""
+# ============================================================
+# 🚀 AVCS DNA-MATRIX SPIRIT v7.x — Main Application Launcher
+# ============================================================
+# Integrates all system modules:
+# - Digital Twin (MATRIX Layer)
+# - Adaptive Learning (SPIRIT Layer)
+# - Core Industrial Intelligence (DNA Layer)
+# ============================================================
 
-import streamlit as st
-from industrial_core.data_manager import DataManager
-from industrial_core.industrial_config import IndustrialConfig
-from digital_twin.industrial_digital_twin import IndustrialTwin
-from plc_integration.integration_adapters import SiemensIntegrationAdapter
+import os
+import streamlit.web.cli as stcli
+import sys
+import subprocess
 
+# ============================================================
+# 🧭 System Metadata
+# ============================================================
+APP_NAME = "AVCS DNA-MATRIX SPIRIT"
+APP_VERSION = "v7.x"
+APP_DESCRIPTION = "Operational Excellence Delivered — The Evolution of Industrial Intelligence"
+
+# ============================================================
+# ⚙️ Directory Validation
+# ============================================================
+
+ESSENTIAL_DIRS = [
+    "ui",
+    "digital_twin",
+    "industrial_core",
+    "plc_integration",
+    "adaptive_learning",
+    "assets",
+    "data"
+]
+
+for directory in ESSENTIAL_DIRS:
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        print(f"[INIT] Created missing directory: {directory}")
+
+# ============================================================
+# 📦 Streamlit Entry Point
+# ============================================================
+
+def run_dashboard():
+    """Launch the unified Streamlit dashboard."""
+    dashboard_path = os.path.join("ui", "dashboard.py")
+
+    if not os.path.exists(dashboard_path):
+        raise FileNotFoundError(f"❌ Dashboard not found: {dashboard_path}")
+
+    print(f"\n🔹 Launching {APP_NAME} {APP_VERSION}")
+    print(f"🔸 Description: {APP_DESCRIPTION}")
+    print(f"🔸 Dashboard: {dashboard_path}\n")
+
+    # Run the Streamlit dashboard
+    subprocess.run(["streamlit", "run", dashboard_path])
+
+# ============================================================
+# 🧬 Adaptive Pre-Checks
+# ============================================================
+
+def system_health_check():
+    """Perform quick environment validation."""
+    print("🔍 Performing system health check...")
+
+    # Check for required Python packages
+    required = ["streamlit", "pandas", "numpy"]
+    missing = []
+    for pkg in required:
+        try:
+            __import__(pkg)
+        except ImportError:
+            missing.append(pkg)
+
+    if missing:
+        print(f"⚠️ Missing packages: {', '.join(missing)}")
+        print("💡 Installing now...")
+        subprocess.run([sys.executable, "-m", "pip", "install", *missing])
+
+    print("✅ Environment ready.\n")
+
+# ============================================================
+# 🧠 Main Entry
+# ============================================================
 
 def main():
-    st.set_page_config(page_title="AVCS DNA-MATRIX SPIRIT v6.0", layout="wide")
-    st.title("⚙️ AVCS DNA-MATRIX SPIRIT v6.0")
-    st.subheader("Operational Intelligence Interface")
+    """Main entry point for AVCS DNA-MATRIX SPIRIT."""
+    print(f"🧬 Initializing {APP_NAME} — {APP_VERSION}")
+    system_health_check()
+    run_dashboard()
 
-    # Load configuration
-    config = IndustrialConfig.load_default()
-    data_manager = DataManager(config)
-    twin = IndustrialTwin()
-    plc_adapter = SiemensIntegrationAdapter()
-
-    st.sidebar.title("System Control")
-    mode = st.sidebar.radio("Select Mode", ["Dashboard", "Simulation", "Integration"])
-
-    if mode == "Dashboard":
-        st.write("### Live Asset Overview")
-        health, vibration = data_manager.get_live_data()
-        st.metric("Health Index", f"{health:.2f}")
-        st.line_chart(vibration)
-
-    elif mode == "Simulation":
-        st.write("### Digital Twin Simulation")
-        twin_output = twin.run_simulation()
-        st.json(twin_output)
-
-    elif mode == "Integration":
-        st.write("### PLC Integration Guide")
-        guide = plc_adapter.generate_integration_guide()
-        st.json(guide)
-
+# ============================================================
+# 🚀 Start
+# ============================================================
 
 if __name__ == "__main__":
     main()
-
