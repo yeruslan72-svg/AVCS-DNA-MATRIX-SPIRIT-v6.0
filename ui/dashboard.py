@@ -7,6 +7,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import os
 import time
 from datetime import datetime
 
@@ -79,23 +80,38 @@ if section == "🏭 Twin Control":
 elif section == "📊 Analytics":
     st.title("📊 Operational Analytics Dashboard")
 
-    data_manager = DataManager()
-    df = data_manager.load_data()
+    data_path = "data/analytics_log.csv"
+    os.makedirs("data", exist_ok=True)
 
-    if df is not None and not df.empty:
+    # Create sample data if missing
+    if not os.path.exists(data_path) or os.stat(data_path).st_size == 0:
+        st.info("Initializing analytics dataset...")
+        timestamps = pd.date_range(end=datetime.now(), periods=50, freq="T")
+        df = pd.DataFrame({
+            "timestamp": timestamps,
+            "temp": np.random.uniform(45, 80, len(timestamps)),
+            "pressure": np.random.uniform(15, 30, len(timestamps)),
+            "flow": np.random.uniform(120, 260, len(timestamps)),
+        })
+        df.to_csv(data_path, index=False)
+        st.success("Demo analytics data generated successfully.")
+    else:
+        df = pd.read_csv(data_path)
+
+    if not df.empty:
         st.subheader("Performance Overview")
         col1, col2, col3 = st.columns(3)
         col1.metric("Avg Temperature", f"{df['temp'].mean():.2f} °C")
         col2.metric("Avg Pressure", f"{df['pressure'].mean():.2f} bar")
         col3.metric("Avg Flow", f"{df['flow'].mean():.2f} m³/h")
 
-        st.line_chart(df[["temp", "pressure", "flow"]])
-        st.caption("Live data stream visualization from Data Manager module.")
+        st.line_chart(df.set_index("timestamp")[["temp", "pressure", "flow"]])
+        st.caption("Live data visualization from analytics log.")
     else:
         st.warning("No data available — waiting for stream input...")
 
     if st.button("🧹 Clear Analytics Log"):
-        data_manager.clear_data()
+        open(data_path, "w").close()
         st.success("Analytics log cleared successfully.")
 
 # ============================================================
