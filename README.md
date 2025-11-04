@@ -98,3 +98,51 @@ achieving the true standard of:
 ```bash
 git clone https://github.com/yeruslan72-svg/AVCS-DNA-MATRIX-SPIRIT-v7.0.git
 cd AVCS-DNA-MATRIX-SPIRIT-v7.0
+```
+
+### ⚙️ 2. Create and Activate Environment
+```bash
+python -m venv venv
+source venv/bin/activate      # macOS/Linux
+venv\Scripts\activate         # Windows
+```
+
+### 📦 3. Install Requirements
+```bash
+pip install -r requirements.txt
+```
+
+### 🧠 4. Run the System
+```bash
+streamlit run ui/dashboard.py
+```
+
+Dashboard available at 👉 **http://localhost:8501**
+
+---
+
+## 🐳 Optional: Run via Docker
+```bash
+docker build -t avcs-spirit .
+docker run -p 8501:8501 avcs-spirit
+```
+
+---
+
+## 🌐 Streamlit Cloud Deployment
+Upload to [Streamlit Cloud](https://share.streamlit.io) with these files:
+- `requirements.txt`
+- `.streamlit/config.toml`
+- `ui/dashboard.py`
+- `/assets/logo.png`
+
+---
+
+## 🪐 Keywords  
+`AI` · `IIoT` · `Digital Twin` · `Adaptive Learning` · `Industrial AI`  
+`Automation` · `Human-Machine Collaboration` · `AVCS` · `DNA-MATRIX-SPIRIT`
+
+---
+
+### © 2025 AVCS Systems. All Rights Reserved.  
+_“Industrial Intelligence with a Human Spirit.”_
