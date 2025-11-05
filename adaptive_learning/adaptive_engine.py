@@ -1,62 +1,61 @@
-# adaptive_learning/adaptive_engine.py
 """
-Adaptive Engine: orchestrator for pattern recognition, context inference, and feedback suggestions.
-Logs audit records into data/adaptive_audit.csv for traceability.
-"""
-import os
-import json
-from datetime import datetime
-from .pattern_recognition import PatternRecognition
-from .context_manager import ContextManager
-from .feedback_controller import FeedbackController
-import pandas as pd
+adaptive_learning/adaptive_engine.py
 
-AUDIT_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "adaptive_audit.csv")
+Minimal AdaptiveEngine class with stable API:
+ - status() -> dict (progress, patterns, last_trained)
+ - retrain(activity=None) -> dict (result summary)
+ - ingest(activity) -> None
+
+This scaffold is intentionally simple — plug your RL/online learning inside.
+"""
+
+from datetime import datetime
+import numpy as np
 
 class AdaptiveEngine:
     def __init__(self):
-        self.pr = PatternRecognition()
-        self.ctx = ContextManager()
-        self.fb = FeedbackController()
-        os.makedirs(os.path.dirname(AUDIT_PATH), exist_ok=True)
-        if not os.path.exists(AUDIT_PATH):
-            with open(AUDIT_PATH, "w") as f:
-                f.write("timestamp,input,context,analysis,proposal\n")
+        self.progress = 0
+        self.pattern = "init"
+        self.last_trained = None
+        self.model_version = "v0.0"
+        # internal counters
+        self._seen = 0
 
-    def analyze_and_propose(self, telemetry: dict, metadata: dict = None):
-        """
-        telemetry: {'vibration':..., 'temperature':..., 'pressure':..., 'rpm':..., 'load':...}
-        metadata: operator, shift etc.
-        Returns: dict with analysis and proposal
-        """
-        ctx = self.ctx.infer_context(telemetry, metadata)
-        # anomaly detection
-        sample = {k: float(telemetry.get(k, 0.0)) for k in ['vibration','temperature','pressure']}
-        is_anom, score = self.pr.detect_anomaly(sample) if hasattr(self.pr, 'detect_anomaly') else (False, 0.0)
-        # simple health/risk heuristic (can be replaced by analytics engine)
-        health_score = max(0.0, 100.0 - (telemetry.get('vibration',0.0)*10 + max(0, telemetry.get('temperature',0)-70)*0.8))
-        risk_index = min(100, int((100-health_score) + (30 if is_anom else 0)))
-
-        proposal = self.fb.propose_actions(risk_index, ctx)
-        analysis = {
-            'health_score': round(health_score,2),
-            'risk_index': risk_index,
-            'is_anomaly': bool(is_anom),
-            'anomaly_score': float(score)
+    def status(self):
+        return {
+            "progress": int(self.progress),
+            "pattern": self.pattern,
+            "last_trained": self.last_trained.isoformat() if self.last_trained else None,
+            "model_version": self.model_version,
+            "seen": int(self._seen)
         }
 
-        # audit log
-        record = {
-            'timestamp': datetime.utcnow().isoformat(),
-            'input': telemetry,
-            'context': ctx,
-            'analysis': analysis,
-            'proposal': proposal
-        }
+    def ingest(self, activity):
+        """Ingest activity list/dict — update counters and quick stats"""
+        if not activity:
+            return
         try:
-            with open(AUDIT_PATH, "a") as f:
-                f.write(json.dumps(record, ensure_ascii=False) + "\n")
+            n = len(activity)
         except Exception:
-            pass
+            n = 1
+        self._seen += n
+        # quick pattern detection stub
+        risks = [a.get("risk", 0) for a in activity if isinstance(a, dict)]
+        if len(risks) > 0 and np.mean(risks) > 50:
+            self.pattern = "high_risk_cluster"
+        else:
+            self.pattern = "stable"
+        # bump progress slightly
+        self.progress = min(100, self.progress + min(5, n/10))
 
-        return {'analysis': analysis, 'proposal': proposal, 'context': ctx}
+    def retrain(self, activity=None):
+        """Trigger retraining — either on provided activity or internal store"""
+        # Very light placeholder: simulate training and bump version
+        self.ingest(activity or [])
+        self.last_trained = datetime.utcnow()
+        major, minor = map(int, self.model_version.lstrip("v").split("."))
+        minor += 1
+        self.model_version = f"v{major}.{minor}"
+        # increase progress as a result
+        self.progress = min(100, self.progress + 10)
+        return {"status": "ok", "model_version": self.model_version, "trained_at": self.last_trained.isoformat()}
