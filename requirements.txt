@@ -1,5 +1,6 @@
 # =========================================================
-# AVCS DNA-MATRIX SPIRIT v7.x — Dependencies
+# AVCS DNA-MATRIX SPIRIT v7.0 — Dependencies
+# Stable Build for Docker + Python 3.10+
 # =========================================================
 
 # Core
@@ -18,8 +19,8 @@ transformers>=4.45.2
 requests>=2.32.3
 pydantic>=2.9.1
 
-# Industrial Protocols (Optional)
-opcua>=0.98.13
+# Industrial Protocols (Stable Versions)
+opcua==0.98.13
 pymodbus>=3.6.3
 paho-mqtt>=2.1.0
 
@@ -29,3 +30,7 @@ pyttsx3>=2.90
 
 # Environment & System
 python-dotenv>=1.0.1
+
+# Optional Utilities
+tqdm>=4.66.5
+
