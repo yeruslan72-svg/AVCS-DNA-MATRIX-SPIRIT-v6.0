@@ -19,7 +19,7 @@ requests>=2.32.3
 pydantic>=2.9.1
 
 # Industrial Protocols (Optional)
-opcua>=0.98.14
+opcua>=0.98.13
 pymodbus>=3.6.3
 paho-mqtt>=2.1.0
 
