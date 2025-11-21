@@ -8,11 +8,13 @@ import pathlib
 
 # Read the contents of README.md
 here = pathlib.Path(__file__).parent
-long_description = (here / "README.md").read_text(encoding="utf-8")
+long_description = (here / "README.md").read_text(encoding="utf-8") if (here / "README.md").exists() else "AVCS DNA-MATRIX SPIRIT - Advanced Vibration Control System"
 
 # Read requirements
-with open('requirements.txt', 'r', encoding='utf-8') as f:
-    requirements = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+requirements = []
+if (here / "requirements.txt").exists():
+    with open('requirements.txt', 'r', encoding='utf-8') as f:
+        requirements = [line.strip() for line in f if line.strip() and not line.startswith('#')]
 
 setup(
     name="avcs-dna-matrix-spirit",
@@ -59,8 +61,19 @@ setup(
         "adaptive control"
     ],
     
-    # Package discovery
-    packages=find_packages(include=["adaptive_learning", "adaptive_learning.*"]),
+    # Package discovery - включаем все ваши модули
+    packages=find_packages(include=[
+        "adaptive_learning", 
+        "adaptive_learning.*",
+        "digital_twin",
+        "digital_twin.*", 
+        "industrial_core",
+        "industrial_core.*",
+        "plc_integration",
+        "plc_integration.*",
+        "ui",
+        "ui.*"
+    ]),
     python_requires=">=3.8, <4",
     
     # Dependencies
@@ -93,6 +106,9 @@ setup(
             "sphinx>=7.0.0",
             "sphinx-rtd-theme>=1.3.0",
         ],
+        "docker": [
+            "docker>=6.0.0",
+        ],
     },
     
     # Include non-Python files
@@ -101,14 +117,29 @@ setup(
         "adaptive_learning": [
             "models/*.joblib",
             "config/*.json",
+        ],
+        "digital_twin": [
+            "config/*.json",
+            "models/*.pkl",
+        ],
+        "industrial_core": [
+            "config/*.json",
+        ],
+        "ui": [
             "assets/*.png",
+            "assets/*.css",
+        ],
+        "assets": [
+            "*.png",
+            "*.ico",
         ],
     },
     
     # Entry points for command-line tools
     entry_points={
         "console_scripts": [
-            "avcs-dashboard=adaptive_learning.ui.dashboard:main",
+            "avcs-dashboard=ui.dashboard:main",
+            "avcs-app=avcs_dna_matrix_spirit_app:main",
             "avcs-train=adaptive_learning.adaptive_core:train_cli",
             "avcs-simulate=adaptive_learning.sample_data:simulate_cli",
         ],
