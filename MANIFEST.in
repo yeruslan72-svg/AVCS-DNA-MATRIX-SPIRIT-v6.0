@@ -1,11 +1,41 @@
+# AVCS DNA-MATRIX SPIRIT v7.0 - Package Data
 include README.md
 include LICENSE
 include requirements.txt
 include pyproject.toml
+include avcs_dna_matrix_spirit_app.py
+include Dockerfile
+include .dockerignore
 
-recursive-include adaptive_learning/models *.joblib
-recursive-include adaptive_learning/config *.json
-recursive-include adaptive_learning/assets *.png *.jpg
+# Configuration files
+recursive-include adaptive_learning *.json *.yaml *.yml
+recursive-include digital_twin *.json *.yaml *.yml
+recursive-include industrial_core *.json *.yaml *.yml
+recursive-include plc_integration *.json *.yaml *.yml
 
-include examples/*.py
-include tests/*.py
+# Model files
+recursive-include adaptive_learning/models *.joblib *.pkl *.h5
+recursive-include digital_twin/models *.joblib *.pkl *.h5
+
+# Asset files
+recursive-include assets *.png *.jpg *.ico *.svg *.css
+recursive-include ui/assets *.png *.jpg *.ico *.svg *.css
+
+# Streamlit configuration
+recursive-include .streamlit *.toml
+
+# Data directories (include structure but not large files)
+recursive-include data *.gitkeep
+
+# GitHub workflows
+recursive-include .github/workflows *.yml
+
+# Examples and tests
+recursive-include examples *.py
+recursive-include tests *.py
+
+# Exclude large or temporary files
+global-exclude *.pyc
+global-exclude __pycache__
+global-exclude *.log
+global-exclude *.tmp
