@@ -1,0 +1,11 @@
+include README.md
+include LICENSE
+include requirements.txt
+include pyproject.toml
+
+recursive-include adaptive_learning/models *.joblib
+recursive-include adaptive_learning/config *.json
+recursive-include adaptive_learning/assets *.png *.jpg
+
+include examples/*.py
+include tests/*.py
