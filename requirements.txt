@@ -1,36 +1,35 @@
-# =========================================================
-# AVCS DNA-MATRIX SPIRIT v7.0 — Dependencies
-# Stable Build for Docker + Python 3.10+
-# =========================================================
+# AVCS DNA-MATRIX SPIRIT v7.0 - Core Dependencies
+# ===============================================
 
-# Core
+# Core Framework
 streamlit>=1.40.0
 pandas>=2.2.2
 numpy>=1.26.4
 plotly>=5.23.0
 matplotlib>=3.9.2
 
-# Machine Learning & Adaptive Layer
+# Machine Learning & AI
 scikit-learn>=1.5.2
 torch>=2.4.1
 transformers>=4.45.2
 
-# Data Handling & APIs
+# Data Processing & APIs
 requests>=2.32.3
 pydantic>=2.9.1
 
-# Industrial Protocols (Stable Versions)
+# Industrial Protocols
 opcua==0.98.13
 pymodbus>=3.6.3
 paho-mqtt>=2.1.0
 
-# Audio / Voice Interface (SPIRIT Layer)
+# Voice Interface
 SpeechRecognition>=3.10.4
 pyttsx3>=2.90
 
-# Environment & System
+# System & Environment
 python-dotenv>=1.0.1
+joblib>=1.3.0
 
-# Optional Utilities
+# Utilities
 tqdm>=4.66.5
-
+scipy>=1.13.0
