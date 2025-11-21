@@ -1,18 +1,84 @@
-# Ignore caches and local configs
+# =============================================
+# AVCS DNA-MATRIX SPIRIT - Git Ignore Rules
+# =============================================
+
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.db
-*.log
-*.sqlite3
+*.so
+.Python
+
+# Environments
 .env
 .venv
-*.egg-info/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Data & ML Models
 data/*
 !data/.gitkeep
-assets/*.png
-.DS_Store
-.git
-.gitignore
+models/*.pkl
+models/*.h5
+models/*.pt
+models/*.joblib
+*.onnx
+checkpoints/
+training_logs/
+
+# Database & Logs
+*.db
+*.sqlite3
+*.log
+*.logs
+logs/
+
+# Streamlit
 .streamlit/secrets.toml
+.streamlit/cache/
+.streamlit/logs/
+
+# Build & Distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Security
+*.key
+*.pem
+*.crt
+*.cert
+*vault*
+*credential*
+*password*
+config/secrets.*
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+dump.*
