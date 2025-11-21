@@ -146,3 +146,17 @@ Upload to [Streamlit Cloud](https://share.streamlit.io) with these files:
 
 ### © 2025 AVCS Systems. All Rights Reserved.  
 _“Industrial Intelligence with a Human Spirit.”_
+## 🚀 Quick Start (5-minute Demo)
+
+### Using Docker (Recommended):
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/avcs-dna-matrix-spirit.git
+cd avcs-dna-matrix-spirit
+
+# Run the demo (Linux/Mac)
+./demo.sh
+
+# Or on Windows
+demo.bat
